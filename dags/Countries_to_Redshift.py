@@ -9,7 +9,7 @@ import logging
 def get_Redshift_connection(autocommit=True):
     hook = PostgresHook(postgres_conn_id='redshift_dev_db')
     conn = hook.get_conn()
-    conn.autocommi = autocommit
+    conn.autocommit = autocommit
     return conn.cursor()
 
 @task
@@ -19,7 +19,8 @@ def get_countries_info():
         data = response.json()
         records = []
         for row in data:
-            records.append([row["name"]["official"], row["population"], row["area"]])
+            country = row["name"]["official"].replace("'", "''")
+            records.append([country, row["population"], row["area"]])
         return records
     else:
         logging.error(f"HTTP Error: {response.status_code} - {response.reason}")
@@ -30,8 +31,8 @@ def _create_table(cur, schema, table):
             DROP TABLE IF EXISTS {schema}.{table};
             CREATE TABLE {schema}.{table} (
             country varchar(255),
-            population varchar(255),
-            area varchar(255)
+            population integer,
+            area float
     );""")
 
 @task
